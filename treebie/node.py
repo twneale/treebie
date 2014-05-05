@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import re
+import json
 import uuid
 import inspect
 import operator
@@ -12,8 +13,8 @@ from hercules import (
         iterdict_filter, DictFilterMixin)
 
 from treebie.chainmap import ChainMap
-from treebie.itemstream import ItemStream
 from treebie.resolvers import (
+    resolve_name,
     LazyImportResolver,
     LazyTypeCreator)
 from treebie.exceptions import ConfigurationError
@@ -163,6 +164,7 @@ class BaseNode(dict):
         self.parent.remove(self)
         del self.parent
         return self
+    detach = detatch
 
     def remove(self, child):
         'Um, should this return something? Not sure.'
@@ -345,17 +347,11 @@ class BaseNode(dict):
 
     @classmethod
     def fromdata(cls, data, default_node_cls=None, nodespace=None):
-        '''
-        '''
-        # Create a new node.
-        if nodespace is None:
-            nodespace = cls.nodespace
-
         # Figure out what node_cls to use.
         if default_node_cls is None:
             type_ = data.get('type')
             if type_ is not None:
-                node_cls = nodespace.resolve(str(type_))
+                node_cls = resolve_name(str(type_))
             else:
                 node_cls = cls
         else:
@@ -391,6 +387,18 @@ class BaseNode(dict):
             post_deserialize(node)
 
         return node
+
+    @classmethod
+    def from_fp(cls, fp):
+        '''Load from an open file protocol object.
+        '''
+        data = json.load(fp)
+        return cls.fromdata(data)
+
+    @classmethod
+    def load(cls, filename):
+        with open(filename) as f:
+            return self.from_fp(f)
 
     #------------------------------------------------------------------------
     # Random utils.
