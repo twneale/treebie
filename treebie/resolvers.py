@@ -100,3 +100,4 @@ class LazyTypeCreator(NodeRefResolver):
 class LazySyntaxTypeCreator(LazyTypeCreator):
     '''Sometime's I even amaze myself with my halfassery.
     '''
+    base_type = 'treebie.syntaxnode.SyntaxNode'
