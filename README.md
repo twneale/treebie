@@ -9,3 +9,5 @@ Treebie
 [![Download Format](https://pypip.in/format/treebie/badge.png)](https://pypi.python.org/pypi/treebie/)
 
 Provides a basic tree node implementation.
+
+MIT License
