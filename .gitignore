@@ -37,3 +37,4 @@ logs
 settings_local.py
 .python_history
 htmlcov/*
+.coveralls.yml
