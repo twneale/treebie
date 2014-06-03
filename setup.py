@@ -18,7 +18,7 @@ setup(**{
     "packages": find_packages(exclude=['tests*']),
     "author_email": "twneale@gmail.com",
     "long_description": long_description,
-    "description": 'Basic tree nodes.',
+    "description": 'Basic tree node implementation',
     "license": "MIT",
     "url": "http://twneale.github.com/treebie/",
     "platforms": ['any'],
