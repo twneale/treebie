@@ -4,11 +4,7 @@
 from collections import MutableMapping
 from itertools import chain
 
-
-class UsageError(Exception):
-    '''Raised if the ChainMap is used wrong.
-    '''
-    pass
+from treebie.exceptions import ChainMapUsageError
 
 
 class ChainMap(MutableMapping):
@@ -36,7 +32,7 @@ class ChainMap(MutableMapping):
             msg = (
                 "This modified ChainMap descriptor only works when "
                 "accessed as a class/instance attribute.")
-            raise UsageError(msg)
+            raise ChainMapUsageError(msg)
         return inst
 
     @property

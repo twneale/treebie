@@ -1,3 +1,6 @@
+class ChainMapUsageError(Exception):
+    '''Raised if the ChainMap is used wrong.
+    '''
 
 class ConfigurationError(Exception):
     '''The user-defined ast models were screwed up.
