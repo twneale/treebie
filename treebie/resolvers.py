@@ -35,7 +35,7 @@ class NodeRefResolver(object):
     def resolve(self, name):
         raise NotImplementedError()
 
-    @CachedClassAttr
+    @CachedAttr
     def _base_type(cls):
         '''Circular import avoidance hack.
         '''
@@ -78,23 +78,6 @@ class LazyTypeCreator(NodeRefResolver):
             exec(template, f.f_globals)
             cls = _globals.get(name)
         return cls
-
-
-    def find_caller(self):
-        """
-        Find the stack frame of the caller so that we can note the source
-        file name, line number and function name.
-        """
-        while hasattr(f, "f_code"):
-            co = f.f_code
-            filename = os.path.normcase(co.co_filename)
-            if filename == _srcfile:
-                f = f.f_back
-                continue
-            rv = (co.co_filename, f.f_lineno, co.co_name)
-            break
-        return rv
-
 
 
 class LazySyntaxTypeCreator(LazyTypeCreator):
