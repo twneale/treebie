@@ -113,7 +113,7 @@ class BaseNode(dict):
     # -----------------------------------------------------------------------
     # Plumbing methods for resolve stringy node references.
     # -----------------------------------------------------------------------
-    @CachedClassAttr
+    @CachedAttr
     def resolvers(self):
         return [cls() for cls in self.noderef_resolvers]
 
