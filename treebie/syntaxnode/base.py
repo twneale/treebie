@@ -108,16 +108,19 @@ class SyntaxNode(Node, metaclass=_NodeMeta):
         to return the parent.'''
         return self.parent
 
-    def resolve(self, itemstream):
+    def resolve(self, itemstream, **options):
         '''Try to resolve the incoming stream against the functions
         defined on the class instance.
         '''
+        debug = options.get('debug')
         for dispatcher, dispatch_data in self._dispatch_data.items():
             match = dispatcher.dispatch(itemstream, dispatch_data)
             if match is None:
                 continue
             method, matched_items = match
             if method is not None:
+                if debug:
+                    print('  * Resolved node to: %r' % method)
                 return method(self, *matched_items)
 
         # Itemstream is exhausted.
@@ -127,6 +130,8 @@ class SyntaxNode(Node, metaclass=_NodeMeta):
         # Propagate up this node's parent.
         parent = getattr(self, 'parent', None)
         if parent is not None:
+            if debug:
+                print(' ..Propagating from %r up to parent %r' % (type(self), type(self.parent)))
             return parent.resolve(itemstream)
         else:
             msg = 'No function defined on %r for %s ...'
@@ -151,7 +156,7 @@ class SyntaxNode(Node, metaclass=_NodeMeta):
                 if options.get('debug'):
                     print('%r <-- %r' % (node, itemstream))
                     node.getroot().pprint()
-                node = node.resolve(itemstream)
+                node = node.resolve(itemstream, **options)
             except StopIteration:
                 break
         return node.getroot()

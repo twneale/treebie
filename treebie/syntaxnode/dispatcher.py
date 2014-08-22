@@ -113,7 +113,6 @@ class TokenSubtypes(Dispatcher):
             data[str2token(token)] = method
         return data
 
-
     def dispatch(self, itemstream, dispatch_data, str2token=string_to_tokentype):
         item = itemstream.this()
         item_token = str2token(item.token)

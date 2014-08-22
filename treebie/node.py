@@ -302,7 +302,13 @@ class BaseNode(dict):
         parent = getattr(self, 'parent', None)
         if parent is None:
             return
-        return iter(parent.children[self.index()])
+        return iter(parent.children[self.index() + 1:])
+
+    def following_sibling(self):
+        try:
+            return next(self.following_siblings())
+        except StopIteration:
+            pass
 
     def preceding_siblings(self):
         '''Iterate over preceding siblings from nearest to farthest.
@@ -310,7 +316,7 @@ class BaseNode(dict):
         parent = getattr(self, 'parent', None)
         if parent is None:
             return
-        return reversed(parent.children[:self.index()])
+        yield from reversed(parent.children[:self.index()])
 
     def preceding_sibling(self):
         try:
