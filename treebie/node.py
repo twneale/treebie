@@ -5,12 +5,13 @@ import json
 import uuid
 import inspect
 import operator
+import contextlib
 from collections import defaultdict
 
 from hercules import (
         CachedAttr, CachedClassAttr, NoClobberDict,
         KeyClobberError, memoize_methodcalls, LoopInterface,
-        iterdict_filter, DictFilterMixin)
+        iterdict_filter, IteratorDictFilter, DictFilterMixin)
 
 from treebie.chainmap import ChainMap
 from treebie.resolvers import (
@@ -57,9 +58,11 @@ class BaseNode(dict):
         LazyImportResolver,
         LazyTypeCreator)
 
+    ChildrenWrapper = NodeList
+
     @CachedAttr
     def children(self):
-        return NodeList()
+        return self.ChildrenWrapper()
 
     # -----------------------------------------------------------------------
     # Custom __eq__ behavior.
@@ -150,32 +153,49 @@ class BaseNode(dict):
         self.children.insert(index, child)
         return child
 
+    def descend_insert(self, index, cls_or_name, *args, **kwargs):
+        '''Insert a child node a specific index.
+        '''
+        cls_or_name = cls_or_name or self.__class__.__name__
+        cls = self.resolve_noderef(cls_or_name)
+        child = cls(**kwargs)
+        if hasattr(child, 'tokens'):
+            child.tokens.extend(args)
+        self.insert(index, child)
+        return child
+
     def index(self):
         '''Return the index of this node in its parent's children
         list.
         '''
         parent = self.parent
         if parent is not None:
-            return parent.children.index(self)
+            for index, child in enumerate(parent.children):
+                if child is self:
+                    return index
 
     def detatch(self):
         '''Remove this node from parent.
         '''
+        index = self.index()
         self.parent.remove(self)
         del self.parent
-        return self
+        return index
     detach = detatch
 
     def remove(self, child):
-        'Um, should this return something? Not sure.'
-        self.children.remove(child)
+        '''Can't just do list.remove, because that uses equality. Here
+        we need to remove based on identity, or horrible bugs will happen.
+        '''
+        self.children.pop(child.index())
 
     # -----------------------------------------------------------------------
     # High-level mutation methods. String references to types allowed.
     # -----------------------------------------------------------------------
     def clone(self, *args, **kwargs):
         new = self.__class__(self, *args, **kwargs)
-        new.children = list(self.children)
+        for kid in self.children:
+            new.append(kid.clone())
         if hasattr(self, 'parent'):
             new.parent = self.parent
         return new
@@ -209,16 +229,35 @@ class BaseNode(dict):
             this = this.descend(cls_or_name)
         return this
 
-    def swap(self, cls_or_name=None, *args, **kwargs):
-        '''Swap cls(*args, **kwargs) for this node and make this node
-        it's child.
-        '''
-        cls_or_name = cls_or_name or self.__class__.__name__
-        cls = self.resolve_noderef(cls_or_name)
-        new_parent = self.parent.descend(cls, *args, **kwargs)
-        self.parent.remove(self)
-        new_parent.append(self)
-        return new_parent
+    # @contextlib.contextmanager
+    # def merge(self, *others):
+    #     '''When the context manager body is done, detatch self and all the
+    #     others.
+    #     '''
+    #     yield
+    #     self.detatch()
+    #     for other in others:
+    #         other.detatch()
+
+    def replace(self, newnode):
+        newnode = self.parent
+        self.parent.insert(self.detatch(), newnode)
+        for child in self.children:
+            newnode.append(child)
+
+    def swap_type(self, type_):
+        newnode = type_(self)
+        self.replace(newnode)
+        return newnode
+
+    # def swap(self, cls_or_name, *args, **kwargs):
+    #     '''Swap cls(*args, **kwargs) for this node and make this node
+    #     it's child.
+    #     '''
+    #     new_node = cls_or_name(*args, **kwargs)
+    #     self.parent.remove(self)
+    #     new_parent.children.extend(self.children)
+    #     return new_parent
 
     # -----------------------------------------------------------------------
     # Readability functions.
