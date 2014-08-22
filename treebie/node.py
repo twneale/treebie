@@ -283,10 +283,13 @@ class BaseNode(dict):
             this = this.parent
         return this
 
-    def depth_first(self):
+    def depth_first(self, depth=None, max_depth=None):
+        depth = depth or 0
+        if max_depth is not None and max_depth < depth:
+            return
         yield self
         for child in self.children:
-            for node in child.depth_first():
+            for node in child.depth_first(depth=depth + 1, max_depth=max_depth):
                 yield node
 
     def has_siblings(self):
@@ -334,22 +337,29 @@ class BaseNode(dict):
         return self.__class__.__name__
 
     @iterdict_filter
-    def find(self, nodekey=None):
+    def find(self, nodekey=None, max_depth=None, **kwargs):
         '''Nodekey must be a string.
         '''
-        for node in self.depth_first():
-            if nodekey is not None:
-                if node.get_nodekey() == nodekey:
-                    yield node
-                else:
-                    continue
-            else:
-                yield node
+        gen = self.depth_first(max_depth=max_depth)
+        if kwargs:
+            gen = IteratorDictFilter(gen).filter(**kwargs)
 
-    def find_one(self, nodekey):
+        if nodekey is not None:
+            for node in gen:
+                if nodekey is not None:
+                    if node.get_nodekey() == nodekey:
+                        yield node
+                    else:
+                        continue
+                else:
+                    yield node
+        else:
+            yield from gen
+
+    def find_one(self, nodekey=None, max_depth=None, **kwargs):
         '''Find the only child matching the criteria.
         '''
-        for node in self.find(nodekey):
+        for node in self.find(nodekey, max_depth=max_depth, **kwargs):
             return node
 
     #------------------------------------------------------------------------
