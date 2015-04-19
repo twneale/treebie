@@ -243,7 +243,6 @@ class BaseNode(dict):
     #         other.detatch()
 
     def replace(self, newnode):
-        newnode = self.parent
         self.parent.insert(self.detatch(), newnode)
         for child in self.children:
             newnode.append(child)
