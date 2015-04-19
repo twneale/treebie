@@ -92,6 +92,9 @@ class BaseNode(dict):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __nonzero__(self):
+        return super().__nonzero__() or bool(self.children)
+
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, dict.__repr__(self))
 
